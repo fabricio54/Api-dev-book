@@ -1,0 +1,48 @@
+Rede Social
+    -- Possível criar publicações que contenham apenas texto
+
+    Banco de dados: 
+        Entidades: Usuários e Publicações
+        . Usuários:
+            . CRUD;
+            . Seguir outro Usuários;
+            . Parar de seguir outro usuário;
+            . Buscar todos os usuários que segue;
+            . Buscar todos os usuárois que são seguidos;
+            . Atualizar Senha.
+
+        duas tabelas no banco de dados:
+            . Usuários
+            . Seguidores
+        
+        . Publicações:
+            . CRUD;
+            . Buscar publicações de acordo com os usuários que segue
+            . curtir
+
+        
+        Componentes:
+            API(Back-end)
+            Web App (Front-end)
+
+        API-DevBook
+
+            Estrutura da Aplicação
+            Pacotes
+
+        Pacotes
+            os pacotes da aplicação podem ser divididos em dois tipos:
+                . Pacotes Principais (relacionadso à estrutura):
+                    . Main
+                    . Router
+                    . Controllers
+                    . Modelos
+                    . Repositórios
+
+                . Pacotes Auxiliares:
+                    . Config
+                    . Banco
+                    . Autenticação
+                    . Middlewares
+                    . Segurança
+                    . Respostas
