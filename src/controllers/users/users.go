@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"fmt"
 
 	//"os/user"
 
@@ -44,7 +45,14 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	repositoriUser := userepositories.NewUserRepository(db)
 
 	// passando um parâmetro modelo de usuários para o repositório de usuários
-	repositoriUser.CreateUser(u)
+	userIDCreated, err := repositoriUser.CreateUser(u)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(fmt.Sprintf(`Usuário com id: %v criado com sucesso!`, userIDCreated)))
 
 }
 
