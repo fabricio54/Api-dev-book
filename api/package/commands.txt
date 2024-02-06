@@ -1,0 +1,8 @@
+Comandos utilizados no projeto:
+
+    . iniciar um projeto go:
+        go mod init nome_projeto
+    . pacote utilizado para configurar as rotas:
+        go get github.com/gorilla/mux
+    . pacote para trabalhar com variáveis de ambientes:
+        go get github.com/joho/godotenv

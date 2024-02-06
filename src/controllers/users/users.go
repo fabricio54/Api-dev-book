@@ -1,10 +1,51 @@
 package users
 
-import "net/http"
+import (
+	"encoding/json"
+	"io"
+	"log"
+	"net/http"
+
+	//"os/user"
+
+	"api/src/database"
+	"api/src/models/usermodels"
+	"api/src/repositories/userepositories"
+)
 
 // cadastrar usuário
 func CreateUser(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("criar usuário"))
+
+	requestBody, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		// por enquanto trataremos o erro assim. posteriormente vamos baixar um pacote para tratar erros
+		log.Fatal(err)
+	}
+
+	// pegando o modelo pronto para inserção de usuário
+	var u usermodels.User
+
+	// verificando se tem erro
+	if err = json.Unmarshal(requestBody, &u); err != nil {
+		log.Fatal(err)
+	}
+
+	// conectando ao banco de dados
+	db, err := database.Connection()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer db.Close()
+
+	//criando repositório
+	repositoriUser := userepositories.NewUserRepository(db)
+
+	// passando um parâmetro modelo de usuários para o repositório de usuários
+	repositoriUser.CreateUser(u)
+
 }
 
 // buscar usuário
