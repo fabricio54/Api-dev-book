@@ -2,16 +2,17 @@ package users
 
 import (
 	"encoding/json"
+	//"fmt"
 	"io"
-	"log"
+	//"log"
 	"net/http"
-	"fmt"
 
 	//"os/user"
 
 	"api/src/database"
 	"api/src/models/usermodels"
 	"api/src/repositories/userepositories"
+	"api/src/response"
 )
 
 // cadastrar usuário
@@ -21,7 +22,8 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		// por enquanto trataremos o erro assim. posteriormente vamos baixar um pacote para tratar erros
-		log.Fatal(err)
+		response.Error(w, http.StatusUnprocessableEntity, err)
+		return
 	}
 
 	// pegando o modelo pronto para inserção de usuário
@@ -29,14 +31,16 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	// verificando se tem erro
 	if err = json.Unmarshal(requestBody, &u); err != nil {
-		log.Fatal(err)
+		response.Error(w, http.StatusBadRequest, err)
+		return
 	}
 
 	// conectando ao banco de dados
 	db, err := database.Connection()
 
 	if err != nil {
-		log.Fatal(err)
+		response.Error(w, http.StatusInternalServerError, err)
+		return
 	}
 
 	defer db.Close()
@@ -48,11 +52,16 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	userIDCreated, err := repositoriUser.CreateUser(u)
 
 	if err != nil {
-		log.Fatal(err)
+		response.Error(w, http.StatusInternalServerError, err)
+		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf(`Usuário com id: %v criado com sucesso!`, userIDCreated)))
+	// como criamos uma estrutura para tratar os erros agora chamamos uma para enviar as repostas em json
+	response.JSON(w, http.StatusOK, struct {
+		ID uint64 `json:"id"`
+	}{
+		ID: userIDCreated,
+	})
 
 }
 

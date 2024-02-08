@@ -6,3 +6,4 @@ Comandos utilizados no projeto:
         go get github.com/gorilla/mux
     . pacote para trabalhar com variáveis de ambientes:
         go get github.com/joho/godotenv
+    . pacote para trabalhar repostas: 

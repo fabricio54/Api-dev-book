@@ -38,5 +38,4 @@ func (repositori Usuarios) CreateUser(user usermodels.User) (uint64, error) {
 	}
 
 	return uint64(lastIDEntered), nil
-
 }
