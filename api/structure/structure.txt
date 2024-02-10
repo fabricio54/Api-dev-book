@@ -1,6 +1,38 @@
 estruturas de pastas e arquivos do projeto
 
     API-DEV-BOOK (source)
+        -- api
+           -- description
+              -- documentacao.txt
+           -- package
+              -- commands.txt
+           -- structure
+              -- structure.txt
+        -- sql
+           -- sql.sql
         -- src
-           -- router
-              router.go
+           -- config 
+              -- config.go
+           -- controllers
+              -- users
+                 -- users.go
+           -- database
+              -- database.go
+           -- models 
+              -- usermodels
+                 -- user.go
+           -- repositories
+              -- userepositories
+                 -- user.go
+           -- response
+              -- response.go
+           -- routers
+              -- router
+                 -- router.go
+                 -- usuarios.go
+              -- router.go
+        -- .env
+        -- go.mod 
+        -- go.sum
+        -- LICENSE
+        -- main.go
