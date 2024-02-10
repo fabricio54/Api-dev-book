@@ -2,6 +2,7 @@ package users
 
 import (
 	"encoding/json"
+	"strings"
 	//"fmt"
 	"io"
 	//"log"
@@ -35,6 +36,12 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// validações nos dados recebidos
+	if err = u.Prepare(); err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
 	// conectando ao banco de dados
 	db, err := database.Connection()
 
@@ -62,7 +69,6 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	}{
 		ID: userIDCreated,
 	})
-
 }
 
 // buscar usuário
@@ -70,9 +76,40 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("buscar usuário"))
 }
 
-// buscar todos os usuários
+// buscar todos os usuários por filtro de nome ou nick
 func GetAllUsers(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("buscar usuários"))
+	// primeiro pegamos o parâmetro usuario vindo da rota:
+	NameOrNick := strings.ToLower(r.URL.Query().Get("usuario"))
+
+	// conexão com o banco de dados
+	db, err := database.Connection()
+
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer db.Close()
+
+	// criando um novo repositori para usuário
+	repositoriUser := userepositories.NewUserRepository(db)
+
+	// pegando os resultados para nome ou nick passados
+	users, err := repositoriUser.GetAllUsers(NameOrNick)
+
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+	}
+
+	// passando os resultados de usuários com nomes ou nicks correspondentes
+	response.JSON(w, http.StatusOK, struct {
+		Name string `json:"name"`
+		Nick string `json:"nick"`
+		Email string `json:"email"`
+	}{
+		Name: users.Name,
+		Nick: users.Nick,
+		Email: users.Email,
+	})
 }
 
 // deletando usuário

@@ -39,3 +39,21 @@ func (repositori Usuarios) CreateUser(user usermodels.User) (uint64, error) {
 
 	return uint64(lastIDEntered), nil
 }
+
+// Método para retornar usuários pelo filtro do nome ou nick
+func (repositori Usuarios) GetAllUsers(nameOrnick string) (*usermodels.User, error) {
+	// executando a query e pegando os resultados
+	resultsRows, err := repositori.db.Query("SELECT name, nick, email FROM users WHERE name=? OR nick=?", nameOrnick, nameOrnick)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var user usermodels.User
+
+	if err := resultsRows.Scan(&user.Name, &user.Nick, &user.Email); err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}

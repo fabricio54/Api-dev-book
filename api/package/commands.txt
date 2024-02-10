@@ -2,6 +2,8 @@ Comandos utilizados no projeto:
 
     . iniciar um projeto go:
         go mod init nome_projeto
+    . pacote utilizado para configurar a interface do drive usado no banco:
+        go get github.com/go-sql-drive/mysql (drive do mysql) ou go get github.com/lib/pq (drive do postgres)
     . pacote utilizado para configurar as rotas:
         go get github.com/gorilla/mux
     . pacote para trabalhar com variáveis de ambientes:
