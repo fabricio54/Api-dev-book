@@ -2,7 +2,9 @@ package users
 
 import (
 	"encoding/json"
+	"strconv"
 	"strings"
+
 	//"fmt"
 	"io"
 	//"log"
@@ -10,11 +12,14 @@ import (
 
 	//"os/user"
 
+	"github.com/gorilla/mux"
 	"api/src/database"
 	"api/src/models/usermodels"
 	"api/src/repositories/userepositories"
 	"api/src/response"
 )
+
+// observação: trabalhar com queryParams: podemos trabalhar na própria url r ja para pegar dados da propria url usamos o pacote mux 
 
 // cadastrar usuário
 func CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -73,7 +78,39 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 // buscar usuário
 func GetUser(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("buscar usuário"))
+	// pegando o id direto da url
+	id := mux.Vars(r)["id"]
+	
+	// pegando parâmetro id
+	idUser, err := strconv.Atoi(id)
+
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	// abrindo uma nova conexão
+	db, err := database.Connection()
+
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer db.Close()
+
+	// criando novo repositório
+	repositoryUser := userepositories.NewUserRepository(db)
+
+	// utilizando o repositório para buscar usuário
+	user, err := repositoryUser.GetUser(idUser)
+
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	// passando o resultado em json
+	response.JSON(w, http.StatusOK, user)
 }
 
 // buscar todos os usuários por filtro de nome ou nick
@@ -101,15 +138,7 @@ func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// passando os resultados de usuários com nomes ou nicks correspondentes
-	response.JSON(w, http.StatusOK, struct {
-		Name string `json:"name"`
-		Nick string `json:"nick"`
-		Email string `json:"email"`
-	}{
-		Name: users.Name,
-		Nick: users.Nick,
-		Email: users.Email,
-	})
+	response.JSON(w, http.StatusOK, users)
 }
 
 // deletando usuário
