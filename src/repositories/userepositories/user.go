@@ -89,3 +89,38 @@ func (repositori Usuarios) GetUser(id int) (usermodels.User, error) {
 	// retornando os dados que vieram no resultado da query
 	return user, nil
 }
+
+// Método para atualizar informações de usuário no banco
+func (repositori Usuarios) UpdateUser(id uint64, user usermodels.User) (error) {
+	// criando o statement
+	statement, err := repositori.db.Prepare("UPDATE users SET name = ?, nick = ?, email = ? WHERE id = ?")
+
+	if err != nil {
+		return err
+	}
+	defer statement.Close()
+
+	// executando statement
+	if _, err = statement.Exec(user.Name, user.Nick, user.Email, id); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Método para deletar informações de usuário no banco
+func (repositori Usuarios) DeleteUser(id uint64) (error) {
+	// criando o statement
+	statement, err := repositori.db.Prepare("DELETE FROM users WHERE id = ?")
+
+	if err != nil {
+		return err
+	}
+
+	// executando statement
+	if _, err = statement.Exec(id); err != nil {
+		return err
+	}
+
+	return nil
+}

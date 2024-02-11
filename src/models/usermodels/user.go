@@ -17,9 +17,9 @@ type User struct {
 }
 
 // funções para validações dos campos
-func (user *User) Prepare() error {
+func (user *User) Prepare(stage string) error {
 
-	if err := user.validate(); err != nil {
+	if err := user.validate(stage); err != nil {
 		return err
 	}
 
@@ -29,7 +29,7 @@ func (user *User) Prepare() error {
 }
 
 // método para verificação de campos
-func (user *User) validate() error {
+func (user *User) validate(stage string) error {
 	if user.Name == "" {
 		return errors.New("O nome é obrigatório e não pode estar em branco")
 	}
@@ -42,7 +42,7 @@ func (user *User) validate() error {
 		return errors.New("O Nick é obrigatório e não pode estar em branco")
 	}
 
-	if user.Password == "" {
+	if stage == "cadastro" && user.Password == "" {
 		return errors.New("A senha é obrigatória e não pode estar em branco")
 	}
 

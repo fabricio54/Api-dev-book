@@ -42,7 +42,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// validações nos dados recebidos
-	if err = u.Prepare(); err != nil {
+	if err = u.Prepare("cadastro"); err != nil {
 		response.Error(w, http.StatusBadRequest, err)
 		return
 	}
@@ -85,7 +85,7 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 	idUser, err := strconv.Atoi(id)
 
 	if err != nil {
-		response.Error(w, http.StatusInternalServerError, err)
+		response.Error(w, http.StatusBadRequest, err)
 		return
 	}
 
@@ -113,7 +113,7 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, user)
 }
 
-// buscar todos os usuários por filtro de nome ou nick
+// buscar todos os usuários pelo filtro de nome ou nick
 func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	// primeiro pegamos o parâmetro usuario vindo da rota:
 	NameOrNick := strings.ToLower(r.URL.Query().Get("usuario"))
@@ -143,10 +143,85 @@ func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 
 // deletando usuário
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("atualizando usuarios"))
+	// pegando o id passado na uri
+	idUser, err := strconv.ParseUint(mux.Vars(r)["id"], 10, 64)
+
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	// pegando os campos para atualização
+	requestBody, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		response.Error(w, http.StatusUnavailableForLegalReasons, err)
+		return
+	}
+
+	// passando o json para struct
+	var user usermodels.User
+
+	if err = json.Unmarshal(requestBody, &user); err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+		return 
+	}
+
+	if err = user.Prepare("edicao"); err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	// conectando ao banco
+	db, err := database.Connection()
+
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	defer db.Close()
+
+	// criando um novo repository
+	repository := userepositories.NewUserRepository(db)
+
+	// usando função do repository para atualizar usuário
+	if err = repository.UpdateUser(idUser, user); err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+	}
+
+	response.JSON(w, http.StatusNoContent, nil)
 }
 
+// deletando informações de usuário no banco
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("deletando usuários"))
+	// pegando o id passado
+	idUser, err := strconv.ParseUint(mux.Vars(r)["id"], 10, 64)
+
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	// conectando ao banco
+	db, err := database.Connection()
+
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+	
+	defer db.Close()
+
+	// criando um novo repositório
+	repositori := userepositories.NewUserRepository(db)
+
+	// chamando função para apagar dados de um usuário pelo id
+	if err = repositori.DeleteUser(idUser); err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	response.JSON(w, http.StatusNoContent, nil)
 }
 
