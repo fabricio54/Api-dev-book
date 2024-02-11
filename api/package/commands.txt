@@ -8,4 +8,7 @@ Comandos utilizados no projeto:
         go get github.com/gorilla/mux
     . pacote para trabalhar com variáveis de ambientes:
         go get github.com/joho/godotenv
-    . pacote para trabalhar repostas: 
+    . pacote para validar email:
+        go get github.com/badoux/checkmail
+    . pacote para incriptar senha:
+        go get golang.org/x/crypto/bcrypt

@@ -1,9 +1,12 @@
 package usermodels
 
 import (
+	"api/src/security"
 	"errors"
 	"strings"
 	"time"
+
+	"github.com/badoux/checkmail"
 )
 
 // estrutura da entidade usuário
@@ -23,7 +26,9 @@ func (user *User) Prepare(stage string) error {
 		return err
 	}
 
-	user.formartting()
+	if err := user.formartting(stage); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -38,6 +43,11 @@ func (user *User) validate(stage string) error {
 		return errors.New("O Email é obrigatório e não pode estar em branco")
 	}
 
+	//validando email passado: estamos validando o formato e não se ele existe
+	if err := checkmail.ValidateFormat(user.Email); err != nil {
+		return errors.New("O e-mail inserido é inválido")
+	}
+
 	if user.Nick == "" {
 		return errors.New("O Nick é obrigatório e não pode estar em branco")
 	}
@@ -50,8 +60,21 @@ func (user *User) validate(stage string) error {
 }
 
 // método para formartar campo
-func (user *User) formartting() {
+func (user *User) formartting(stage string) (error) {
 	user.Name = strings.TrimSpace(user.Name)
 	user.Email = strings.TrimSpace(user.Email)
 	user.Nick = strings.TrimSpace(user.Nick)
+
+	if stage == "cadastro" {
+
+		passwordHash, err := security.Hash(user.Password)
+
+		if err != nil {
+			return err
+		}
+
+		user.Password = string(passwordHash)
+	}
+
+	return nil
 }
