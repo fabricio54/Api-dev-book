@@ -124,3 +124,19 @@ func (repositori Usuarios) DeleteUser(id uint64) (error) {
 
 	return nil
 }
+
+// Método para buscar usuário no banco por email
+func (repositori Usuarios) SearchEmailUser(email string) (usermodels.User, error) {
+
+	//criando modelo de user
+	var user usermodels.User
+
+	// buscar usuário no banco
+	if err := repositori.db.QueryRow("SELECT id, password FROM users WHERE email = ?", email).Scan(&user.ID, &user.Password); err != nil {
+		return usermodels.User{}, nil
+	}
+
+	// retornando estrutura
+	return user, nil
+
+}

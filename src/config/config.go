@@ -13,6 +13,7 @@ var (
 	StringConnection = ""
 	Port             = 0
 	DriveDataBase    = ""
+	SecretKey []byte
 )
 
 // inializa as variáveis de ambiente
@@ -34,4 +35,6 @@ func Load() {
 
 	// configurando string de conexão com o banco de dados
 	StringConnection = fmt.Sprintf(`%s:%s@/%s?charset=utf8&parseTime=True&loc=Local`, os.Getenv("DB_USUARIO"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"))
+
+	SecretKey = []byte(os.Getenv("SECRET_KEY"))
 }

@@ -12,3 +12,5 @@ Comandos utilizados no projeto:
         go get github.com/badoux/checkmail
     . pacote para incriptar senha:
         go get golang.org/x/crypto/bcrypt
+    . pacote para trabalhar com autenticação jwt: 
+        go get github.com/dgrijalva/jwt-go
