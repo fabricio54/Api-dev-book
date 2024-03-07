@@ -12,14 +12,16 @@ import (
 
 	//"os/user"
 
-	"github.com/gorilla/mux"
+	"api/src/authentication"
 	"api/src/database"
 	"api/src/models/usermodels"
 	"api/src/repositories/userepositories"
 	"api/src/response"
+
+	"github.com/gorilla/mux"
 )
 
-// observação: trabalhar com queryParams: podemos trabalhar na própria url r ja para pegar dados da propria url usamos o pacote mux 
+// observação: trabalhar com queryParams: podemos trabalhar na própria url r ja para pegar dados da propria url usamos o pacote mux
 
 // cadastrar usuário
 func CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -148,6 +150,19 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		response.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	// antes de fazer o update temos que verificar se o da requisição é igual ao id do token de autorização
+	userIdToken, err := authentication.ExtractUserId(r)
+
+	if err != nil {
+		response.Error(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	if userIdToken != idUser {
+		response.Error(w, http.StatusForbidden, err)
 		return
 	}
 

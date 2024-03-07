@@ -29,7 +29,7 @@ var UsersRouters = []Router {
 		URI: "/users/{id}",
 		Method: http.MethodPut,
 		Function: users.UpdateUser,
-		requireAuthentication: false,
+		requireAuthentication: true,
 	},
 	{
 		URI: "/users/{id}",

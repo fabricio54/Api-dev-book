@@ -66,7 +66,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// chamando a função para gerar token
-	token, _ := authentication.CreateTokenJWT(idUser)
+	token, err := authentication.CreateTokenJWT(idUser)
+
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+	}
 
 	w.Write([]byte(token))
 }
