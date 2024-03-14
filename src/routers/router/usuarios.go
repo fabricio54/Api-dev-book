@@ -38,9 +38,15 @@ var UsersRouters = []Router {
 		requireAuthentication: true,
 	},
 	{
-		URI: "/users/{id}/follower",
+		URI: "/users/{id}/follow",
 		Method: http.MethodPost,
 		Function: users.UserFollower,
+		requireAuthentication: true,
+	},
+	{
+		URI: "/users/{id}/unfollow",
+		Method: http.MethodDelete,
+		Function: users.UserUnfollower,
 		requireAuthentication: true,
 	},
 }

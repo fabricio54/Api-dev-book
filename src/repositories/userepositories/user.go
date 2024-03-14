@@ -154,5 +154,20 @@ func (repositori Usuarios) Follower(idUser, idFollower uint64) (error) {
 	}
 
 	return nil
+}
 
+// Método para deixar de seguir usuário
+func (repositori Usuarios) Unfollow(idFollowed, idFollower uint64) error {
+	statement, err := repositori.db.Prepare("delete from followers where user_id = ? && follower_id = ?")
+
+	if err != nil {
+		return err
+	}
+	defer statement.Close()
+
+	if _, err = statement.Exec(idFollowed, idFollower); err != nil {
+		return err
+	}
+
+	return nil
 }
