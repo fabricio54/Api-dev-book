@@ -2,6 +2,7 @@ package users
 
 import (
 	"encoding/json"
+	"errors"
 	"strconv"
 	"strings"
 
@@ -82,7 +83,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 func GetUser(w http.ResponseWriter, r *http.Request) {
 	// pegando o id direto da url
 	id := mux.Vars(r)["id"]
-	
+
 	// pegando parâmetro id
 	idUser, err := strconv.Atoi(id)
 
@@ -162,7 +163,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if userIdToken != idUser {
-		response.Error(w, http.StatusForbidden, err)
+		response.Error(w, http.StatusForbidden, errors.New("não é possivel atualizar usuário que não o seu"))
 		return
 	}
 
@@ -179,7 +180,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	if err = json.Unmarshal(requestBody, &user); err != nil {
 		response.Error(w, http.StatusBadRequest, err)
-		return 
+		return
 	}
 
 	if err = user.Prepare("edicao"); err != nil {
@@ -218,6 +219,18 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userIdToken, err := authentication.ExtractUserId(r)
+
+	if err != nil {
+		response.Error(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	if userIdToken != idUser {
+		response.Error(w, http.StatusForbidden, errors.New("não é possivel deletar usuário que não o seu"))
+		return
+	}
+
 	// conectando ao banco
 	db, err := database.Connection()
 
@@ -225,7 +238,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusInternalServerError, err)
 		return
 	}
-	
+
 	defer db.Close()
 
 	// criando um novo repositório
@@ -240,3 +253,42 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusNoContent, nil)
 }
 
+// usuário possar seguir outro
+func UserFollower(w http.ResponseWriter, r *http.Request) {
+
+	idUser, err := authentication.ExtractUserId(r)
+
+	if err != nil {
+		response.Error(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	params := mux.Vars(r)
+	idFollower, err := strconv.ParseUint(params["id"], 10, 64)
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if idFollower == idUser {
+		response.Error(w, http.StatusForbidden, errors.New("não é possível seguir você mesmo"))
+		return
+	}
+
+	db, err := database.Connection()
+
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer db.Close()
+
+	repositoriUsers := userepositories.NewUserRepository(db)
+
+	if err = repositoriUsers.Follower(idUser, idFollower); err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	response.JSON(w, http.StatusNoContent, nil)
+}

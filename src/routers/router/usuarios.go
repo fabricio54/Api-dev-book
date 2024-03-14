@@ -17,13 +17,13 @@ var UsersRouters = []Router {
 		URI: "/users",
 		Method: http.MethodGet,
 		Function: users.GetAllUsers,
-		requireAuthentication: false,
+		requireAuthentication: true,
 	},
 	{
 		URI: "/users/{id}",
 		Method: http.MethodGet,
 		Function: users.GetUser,
-		requireAuthentication: false,
+		requireAuthentication: true,
 	}, 
 	{
 		URI: "/users/{id}",
@@ -35,6 +35,12 @@ var UsersRouters = []Router {
 		URI: "/users/{id}",
 		Method: http.MethodDelete,
 		Function: users.DeleteUser,
-		requireAuthentication: false,
+		requireAuthentication: true,
+	},
+	{
+		URI: "/users/{id}/follower",
+		Method: http.MethodPost,
+		Function: users.UserFollower,
+		requireAuthentication: true,
 	},
 }

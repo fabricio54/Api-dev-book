@@ -8,12 +8,10 @@ import (
 	"net/http"
 )
 
-
 func main() {
 
 	// chamando a função config.load para carregar as credencias e carregar a string de conexão com o banco
 	config.Load()
-
 
 	// importando o pacote server
 	router := routers.ToGenerate()

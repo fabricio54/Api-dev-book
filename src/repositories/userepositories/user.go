@@ -138,5 +138,21 @@ func (repositori Usuarios) SearchEmailUser(email string) (usermodels.User, error
 
 	// retornando estrutura
 	return user, nil
+}
+
+// Método para seguir outro usuário
+func (repositori Usuarios) Follower(idUser, idFollower uint64) (error) {
+	statement, err := repositori.db.Prepare("insert ignore into followers (user_id, follower_id) values (?, ?)")
+
+	if err != nil {
+		return err
+	}
+	defer statement.Close()
+
+	if _, err := statement.Exec(idUser, idFollower); err != nil {
+		return err
+	}
+
+	return nil
 
 }
