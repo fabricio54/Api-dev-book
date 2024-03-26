@@ -14,7 +14,7 @@ type Usuarios struct {
 }
 
 // criando uma função para criar uma instância de usuários e retornar. esse processo é feito para que possamos manipular as funções específicas para usuários
-func NewUserRepository(db *sql.DB) (*Usuarios) {
+func NewUserRepository(db *sql.DB) *Usuarios {
 	return &Usuarios{db}
 }
 
@@ -65,13 +65,13 @@ func (repositori Usuarios) GetAllUsers(nameOrnick string) ([]usermodels.User, er
 		if err = rows.Scan(&id, &name, &nick, &email, &createdIn); err != nil {
 			return nil, err
 		}
-		user = append(user, usermodels.User{Name:name, Nick:nick, Email:email, ID: id, CreatedIn: createdIn})
+		user = append(user, usermodels.User{Name: name, Nick: nick, Email: email, ID: id, CreatedIn: createdIn})
 	}
 	/*
-	if err := resultsRows.Scan(&user.Name, &user.Nick, &user.Email); err != nil {
-		return nil, err
-	}
-    */
+		if err := resultsRows.Scan(&user.Name, &user.Nick, &user.Email); err != nil {
+			return nil, err
+		}
+	*/
 
 	return user, nil
 }
@@ -91,7 +91,7 @@ func (repositori Usuarios) GetUser(id int) (usermodels.User, error) {
 }
 
 // Método para atualizar informações de usuário no banco
-func (repositori Usuarios) UpdateUser(id uint64, user usermodels.User) (error) {
+func (repositori Usuarios) UpdateUser(id uint64, user usermodels.User) error {
 	// criando o statement
 	statement, err := repositori.db.Prepare("UPDATE users SET name = ?, nick = ?, email = ? WHERE id = ?")
 
@@ -109,7 +109,7 @@ func (repositori Usuarios) UpdateUser(id uint64, user usermodels.User) (error) {
 }
 
 // Método para deletar informações de usuário no banco
-func (repositori Usuarios) DeleteUser(id uint64) (error) {
+func (repositori Usuarios) DeleteUser(id uint64) error {
 	// criando o statement
 	statement, err := repositori.db.Prepare("DELETE FROM users WHERE id = ?")
 
@@ -141,7 +141,7 @@ func (repositori Usuarios) SearchEmailUser(email string) (usermodels.User, error
 }
 
 // Método para seguir outro usuário
-func (repositori Usuarios) Follower(idUser, idFollower uint64) (error) {
+func (repositori Usuarios) Follower(idUser, idFollower uint64) error {
 	statement, err := repositori.db.Prepare("insert ignore into followers (user_id, follower_id) values (?, ?)")
 
 	if err != nil {
@@ -166,6 +166,108 @@ func (repositori Usuarios) Unfollow(idFollowed, idFollower uint64) error {
 	defer statement.Close()
 
 	if _, err = statement.Exec(idFollowed, idFollower); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Método para buscar seguidores
+func (repositori Usuarios) SearchForFollowers(idUser uint64) ([]usermodels.User, error) {
+	rows, err := repositori.db.Query(`
+	SELECT u.id, u.name, u.nick, u.email, u.createdIn FROM users as u inner join followers as f
+    ON u.id = f.user_id
+    WHERE f.follower_id = ?
+	`, idUser)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// pegar todos os usuários e passar para um struct de usuários
+	var users []usermodels.User
+	for rows.Next() {
+
+		var id, name, nick, email string
+		var createdIn time.Time
+
+		if err := rows.Scan(&id, &name, &nick, &email, &createdIn); err != nil {
+			return nil, err
+		}
+		users = append(users, usermodels.User{ID: id, Name: name, Nick: nick, Email: email, CreatedIn: createdIn})
+	}
+
+	return users, nil
+}
+
+// Método para buscar usuários que te seguem
+func (repositori Usuarios) GetForFollowing(idUser uint64) ([]usermodels.User, error) {
+	// criando a query
+	rows, err := repositori.db.Query(`
+	SELECT 
+		u.id, u.name, u.nick, u.email, u.createdIn 
+	FROM 
+		users as u inner join followers as f
+    ON 
+		u.id = f.follower_id
+    WHERE 
+		f.user_id = ?;
+	`, idUser)
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []usermodels.User
+
+	for rows.Next() {
+
+		var user usermodels.User
+
+		if err := rows.Scan(
+			&user.ID,
+			&user.Name,
+			&user.Nick,
+			&user.Email,
+			&user.CreatedIn,
+		); err != nil {
+			return nil, err
+		}
+
+		users = append(users, user)
+
+	}
+
+	return users, nil
+}
+
+// busca senha do usário
+func (repositori Usuarios) SearchPassword(idUser uint64) (string, error) {
+
+	var password string
+	
+	if err := repositori.db.QueryRow(`
+		select password from users where id = ?
+	`, idUser).Scan(&password); err != nil {
+		return "", nil
+	}
+
+	return password, nil
+}
+
+// atualiza senha de usuário
+func (repositori Usuarios) UpdatePasswordUser(idUser uint64, password string) error {
+	statement, err := repositori.db.Prepare(`
+		UPDATE users SET password = ? where id = ?
+	`)
+
+	if err != nil {
+		return err
+	}
+	defer statement.Close()
+
+	if _, err = statement.Exec(password, idUser); err != nil {
 		return err
 	}
 

@@ -18,6 +18,7 @@ import (
 	"api/src/models/usermodels"
 	"api/src/repositories/userepositories"
 	"api/src/response"
+	"api/src/security"
 
 	"github.com/gorilla/mux"
 )
@@ -330,4 +331,162 @@ func UserUnfollower(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.JSON(w, http.StatusOK, nil)
+}
+
+// buscar usuários que te seguem
+func GetFollowers(w http.ResponseWriter, r *http.Request) {
+	// pegando id que vem nos parametros da url
+	userId, err := strconv.ParseUint(mux.Vars(r)["id"], 10, 64)
+
+	// verificando se a erro
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	// abrindo conexão com a base de dados
+	db, err := database.Connection()
+
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer db.Close()
+
+	// abrindo repositório de usuários
+	repositoriUser := userepositories.NewUserRepository(db)
+
+	// chamando função para buscar seguidores
+	followers, err := repositoriUser.SearchForFollowers(userId)
+
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, followers)
+}
+
+// buscar usuários que voce segue
+func GetFollowing(w http.ResponseWriter, r *http.Request) {
+
+	// pegando id rota
+	idUser, err := strconv.ParseUint(mux.Vars(r)["id"], 10, 64)
+
+	// vericando se é válido
+	if err != nil {
+		response.Error(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	// conectando com a base de dados
+	db, err := database.Connection()
+
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer db.Close()
+
+	// criando repositório
+	repositoriUser := userepositories.NewUserRepository(db)
+
+	// chamando função para pegar os usuários que idUser segue
+	users, err := repositoriUser.GetForFollowing(idUser)
+
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	// usuários que idUser segue
+	response.JSON(w, http.StatusOK, users)
+}
+
+// rota para atualizar senha de usuário 
+func UpdatePasswordUser(w http.ResponseWriter, r *http.Request) {
+	// pegando usuário que vem da requisão
+	idUserToken, err := authentication.ExtractUserId(r)
+
+	if err != nil {
+		response.Error(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	// pegando usuário id que vem nos parâmetros
+	idUserParams, err := strconv.ParseUint(mux.Vars(r)["id"], 10, 64)
+
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	// comparando se os ids são diferentes
+	if idUserParams != idUserToken {
+		response.Error(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	// pegando a senha que vem dos parâmetros do body
+	requestBody, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		response.Error(w, http.StatusForbidden, errors.New("não é possível atualizar senha de um usuário que não seja o seu"))
+		return
+	}
+
+	/* observação: precisamos criar um struct de outro modelo para comparar as senhas {
+		"nova": "12342",
+		"atual": "442342"
+	}
+	*/
+
+	// abrindo conexão com o banco de dados
+	var password usermodels.Password
+	
+	// passando o json para estrutura
+	if err := json.Unmarshal(requestBody, &password); err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	// abrindo conexão com o banco de dados
+	db, err := database.Connection()
+
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer db.Close()
+
+	// criando um novo repositório
+	userRepositori := userepositories.NewUserRepository(db)
+
+	passwordFromDatabase, err := userRepositori.SearchPassword(idUserToken)
+
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	// aqui agente verifica se a que está na base de dados e a mesma que venho da requisição
+	if err = security.CheckPassword(password.Current,passwordFromDatabase); err != nil {
+		response.Error(w, http.StatusUnauthorized, errors.New("a senha atual não condiz com a que está salva no banco"))
+		return
+	}
+
+	passwordHash, err := security.Hash(password.New)
+	
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if err = userRepositori.UpdatePasswordUser(idUserToken, string(passwordHash)); err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	response.JSON(w, http.StatusNoContent, nil)
+
 }
